@@ -10,10 +10,6 @@ import java.util.Scanner;
 
 public class Main {
 
-    public static int decimalIntToBinaryInt(int decimalValue){
-        return Integer.parseInt(Integer.toBinaryString(decimalValue));
-    }
-
     public static void main(String[] args) {
 
 
@@ -24,11 +20,16 @@ public class Main {
         //each time with a different variable name. Variable name "Current input at AI3" is listed three times. Assumptions
         //regarding such instances are mentioned along with the value correlating to the variable in question.
 
+        //Strange register values are also found in the live text feed provided by the url
+        //http://tuftuf.gambitlabs.fi/feed.txt. For example, register 93 holds an integer in the range of 0-2047
+        //according to the documentation, however, in the text feed the value is 3475. Various other oddities
+        //are also encountered among the register values of the text feed.
+
         //Real4 = Float
 
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        InputStream is = null;
+        InputStream is;
         try {
             URL url = new URL("http://tuftuf.gambitlabs.fi/feed.txt");
             is = url.openStream ();
@@ -45,14 +46,8 @@ public class Main {
             e.printStackTrace ();
         }
 
-        byte[] binaryData = baos.toByteArray();
-
-        String data = new String(binaryData, StandardCharsets.UTF_8);
-
+        String data = baos.toString(StandardCharsets.UTF_8);
         Scanner scanner = new Scanner(data);
-
-
-
         int registerNr = 1;
 
         System.out.println("Date and time: " + scanner.nextLine());
@@ -73,7 +68,7 @@ public class Main {
                         variableValue = thirtyTwoBitBinaryToFloat(secondRegisterValue,firstRegisterValue);
                         break;
                     case 3:
-                        variableName = "Energy Flow Rate (m/s)";
+                        variableName = "Energy Flow Rate (GJ/h)";
                         variableValue = thirtyTwoBitBinaryToFloat(secondRegisterValue,firstRegisterValue);
                         break;
                     case 5:
@@ -157,11 +152,11 @@ public class Main {
                         variableValue = thirtyTwoBitBinaryToFloat(secondRegisterValue,firstRegisterValue);
                         break;
                     case 45:
-                        variableName = "Current input at AI4 (mA, manual states AI3 but this is believed to be an error)";
+                        variableName = "Current input at AI4 (mA, documentation states AI3 but this is believed to be an error)";
                         variableValue = thirtyTwoBitBinaryToFloat(secondRegisterValue,firstRegisterValue);
                         break;
                     case 47:
-                        variableName = "Current input at AI5 (mA, manual states AI3 but this is believed to be an error)";
+                        variableName = "Current input at AI5 (mA, documentation states AI3 but this is believed to be an error)";
                         variableValue = thirtyTwoBitBinaryToFloat(secondRegisterValue,firstRegisterValue);
                         break;
                     case 49:
@@ -183,7 +178,7 @@ public class Main {
                         variableValue = thirtyTwoBitBinaryToFloat(secondRegisterValue,firstRegisterValue);
                         break;
                     case 83:
-                        variableName = "Delta travel time (Nanoseconds, documentation states ninoseconds)";
+                        variableName = "Delta travel time (Nanoseconds, documentation incorrectly states \"ninoseconds\")";
                         variableValue = thirtyTwoBitBinaryToFloat(secondRegisterValue,firstRegisterValue);
                         break;
                     case 85:
@@ -199,7 +194,7 @@ public class Main {
                         variableValue = thirtyTwoBitBinaryToFloat(secondRegisterValue,firstRegisterValue);
                         break;
                     case 97:
-                        variableName = "The rate of the measured travel time by the calculated travel time";
+                        variableName = "The rate of the measured travel time by the calculated travel time (Normal: 100% +- 3%)";
                         variableValue = thirtyTwoBitBinaryToFloat(secondRegisterValue,firstRegisterValue);
                         break;
                     case 99:
@@ -214,7 +209,6 @@ public class Main {
             } else if(registerNr == 51 || registerNr == 56 || (registerNr >= 59 && registerNr <= 63) || registerNr == 72 || (registerNr >= 92 && registerNr <= 94) || registerNr == 96) {
                 //Variables stored in only one register are handled here
                 //Integer values do not need converting, e.g. "Key to Input" in register 59
-                //TODO verify all cases in this category
                 String line = scanner.nextLine();
                 String registerValue = line.substring(line.indexOf(":") + 1);
                 String variableName = "";
@@ -226,7 +220,6 @@ public class Main {
                         variableValue = parseBCD(decimalToSixteenBitBinary(registerValue));
                         break;
                     case 56:
-                        //TODO Test this
                         variableName = "Day+Hour for Auto-Save";
                         variableValue = parseBCD(decimalToSixteenBitBinary(registerValue));
                         if (variableValue.substring(0, 2).equalsIgnoreCase("00")) {
@@ -257,7 +250,7 @@ public class Main {
                         break;
                     case 72:
                         variableName = "Error code (Refer to documentation for details)";
-                        variableValue = decimalToSixteenBitBinary(registerValue);
+                        variableValue = parseErrorCode(decimalToSixteenBitBinary(registerValue));
                         break;
                     case 92:
                         //Two variables are stored in this register
@@ -266,7 +259,7 @@ public class Main {
                         String highByte = variableValue.substring(0, 8);
                         System.out.println(variableName + ": " + Integer.parseInt(highByte, 2));
 
-                        variableName = "Signal step";
+                        variableName = "Signal Quality (Range 0 - 99)";
                         variableValue = Integer.toString(Integer.parseInt(variableValue.substring(8), 2));
                         break;
                     case 93:
@@ -278,7 +271,7 @@ public class Main {
                         variableValue = registerValue;
                         break;
                     case 96:
-                        variableName = "Language (0 = English, 1 = Chinese)";
+                        variableName = "Language used in user interface (0 = English, 1 = Chinese)";
                         if (decimalToSixteenBitBinary(registerValue).charAt(15) == '0') {
                             variableValue = "0";
                         } else {
@@ -289,6 +282,7 @@ public class Main {
 
                 System.out.println(variableName + ": " + variableValue);
                 registerNr = registerNr + 1;
+
             } else if(registerNr == 53){
                 //Special case where the variable is stored in three registers
                 String variableName = "Calendar (date and time)";
@@ -303,11 +297,6 @@ public class Main {
 
                 SimpleDateFormat sdf = new SimpleDateFormat("ssmmHHddMMyy");
                 try {
-                    System.out.println(parseBCD(
-                            decimalToSixteenBitBinary(thirdRegisterValue)
-                                    + decimalToSixteenBitBinary(secondRegisterValue)
-                                    + decimalToSixteenBitBinary(firstRegisterValue)));
-
                     variableValue = sdf.parse(parseBCD(
                             decimalToSixteenBitBinary(thirdRegisterValue)
                             + decimalToSixteenBitBinary(secondRegisterValue)
@@ -318,34 +307,11 @@ public class Main {
 
                 System.out.println(variableName + ": " + variableValue);
                 registerNr = registerNr + 3;
-
             } else {
                 scanner.nextLine();
                 registerNr++;
             }
-
-
-
         }
-
-
-        System.out.println();
-
-        System.out.println(thirtyTwoBitBinaryToFloat("16611","15568"));
-        System.out.println(thirtyTwoBitBinaryToSignedInteger("65535","65480"));
-        String dateBits = decimalToSixteenBitBinary("5889") + decimalToSixteenBitBinary("4386") + decimalToSixteenBitBinary("6432");
-        System.out.println(dateBits);
-        System.out.println(parseBCD(dateBits));
-        SimpleDateFormat sdf = new SimpleDateFormat("ssmmHHddMMyy");
-        try {
-            System.out.println(sdf.parse(parseBCD(decimalToSixteenBitBinary("5889") + decimalToSixteenBitBinary("4386") + decimalToSixteenBitBinary("6432"))));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println(parseErrorCode("1111111111111111"));
-
-
     }
 
     public static String decimalToSixteenBitBinary(String decimalString){
