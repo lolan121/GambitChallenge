@@ -279,7 +279,7 @@ public class Main {
                         break;
                     case 96:
                         variableName = "Language (0 = English, 1 = Chinese)";
-                        if (registerValue.charAt(15) == '0') {
+                        if (decimalToSixteenBitBinary(registerValue).charAt(15) == '0') {
                             variableValue = "0";
                         } else {
                             variableValue = "1";
@@ -303,10 +303,15 @@ public class Main {
 
                 SimpleDateFormat sdf = new SimpleDateFormat("ssmmHHddMMyy");
                 try {
+                    System.out.println(parseBCD(
+                            decimalToSixteenBitBinary(thirdRegisterValue)
+                                    + decimalToSixteenBitBinary(secondRegisterValue)
+                                    + decimalToSixteenBitBinary(firstRegisterValue)));
+
                     variableValue = sdf.parse(parseBCD(
-                            decimalToSixteenBitBinary(thirdRegisterValue
-                            + decimalToSixteenBitBinary(secondRegisterValue
-                            + decimalToSixteenBitBinary(firstRegisterValue))))).toString();
+                            decimalToSixteenBitBinary(thirdRegisterValue)
+                            + decimalToSixteenBitBinary(secondRegisterValue)
+                            + decimalToSixteenBitBinary(firstRegisterValue))).toString();
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -324,9 +329,7 @@ public class Main {
         }
 
 
-
-
-
+        System.out.println();
 
         System.out.println(thirtyTwoBitBinaryToFloat("16611","15568"));
         System.out.println(thirtyTwoBitBinaryToSignedInteger("65535","65480"));
@@ -340,7 +343,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        System.out.println(Integer.parseInt("0001011100000001",2));
+        System.out.println(parseErrorCode("1111111111111111"));
 
 
     }
@@ -382,7 +385,6 @@ public class Main {
         return result.toString();
     }
 
-    //TODO Test this method, ALSO optimize it!!!!!
     public static String parseErrorCode(String errorCode){
         StringBuilder errorCodeString = new StringBuilder(errorCode);
         int numberOfErrors = 0;
@@ -395,108 +397,7 @@ public class Main {
 
         if(numberOfErrors == 0){
             return "No errors";
-        } else if(numberOfErrors == 1) {
-            int indexOfError = errorCodeString.indexOf("1");
-            switch (indexOfError){
-                case 0:
-                    return "analog input over range";
-                case 1:
-                    return "internal timer over flow";
-                case 2:
-                    return "reserved";
-                case 3:
-                    return "temperature circuits error";
-                case 4:
-                    return "ROM check-sum error";
-                case 5:
-                    return "parameters check-sum error";
-                case 6:
-                    return "main clock or timer clock error";
-                case 7:
-                    return "RAM check-sum error";
-                case 8:
-                    return "current at 4-20mA over flow";
-                case 9:
-                    return "frequency at the frequency output over flow";
-                case 10:
-                    return "receiving circuits gain in adjusting";
-                case 11:
-                    return "hardware failure";
-                case 12:
-                    return "pipe empty";
-                case 13:
-                    return "poor received signal";
-                case 14:
-                    return "low received signal";
-                case 15:
-                    return "no received signal";
-            }
-        } else if(numberOfErrors == 2){
-            boolean second = false;
-            StringBuilder errorMessage = new StringBuilder();
-            for (int i = 0; i <errorCodeString.length(); i++){
-                if(errorCodeString.charAt(i) == '1'){
-                    switch (i){
-                        case 0:
-                            errorMessage.append("analog input over range");
-                            break;
-                        case 1:
-                            errorMessage.append("internal timer over flow");
-                            break;
-                        case 2:
-                            errorMessage.append("reserved");
-                            break;
-                        case 3:
-                            errorMessage.append("temperature circuits error");
-                            break;
-                        case 4:
-                            errorMessage.append("ROM check-sum error");
-                            break;
-                        case 5:
-                            errorMessage.append("parameters check-sum error");
-                            break;
-                        case 6:
-                            errorMessage.append("main clock or timer clock error");
-                            break;
-                        case 7:
-                            errorMessage.append("RAM check-sum error");
-                            break;
-                        case 8:
-                            errorMessage.append("current at 4-20mA over flow");
-                            break;
-                        case 9:
-                            errorMessage.append("frequency at the frequency output over flow");
-                            break;
-                        case 10:
-                            errorMessage.append("receiving circuits gain in adjusting");
-                            break;
-                        case 11:
-                            errorMessage.append("hardware failure");
-                            break;
-                        case 12:
-                            errorMessage.append("pipe empty");
-                            break;
-                        case 13:
-                            errorMessage.append("poor received signal");
-                            break;
-                        case 14:
-                            errorMessage.append("low received signal");
-                            break;
-                        case 15:
-                            errorMessage.append("no received signal");
-                            break;
-                    }
-                    if(!second){
-                        errorMessage.append(" and ");
-                        second = true;
-                    } else {
-                        return errorCode;
-                    }
-
-
-                }
-            }
-        } else if(numberOfErrors > 2){
+        } else {
             StringBuilder errorMessage = new StringBuilder();
             for (int i = 0; i <errorCodeString.length(); i++) {
                 if (errorCodeString.charAt(i) == '1') {
@@ -552,16 +453,16 @@ public class Main {
                     }
                     numberOfErrors--;
                     if (numberOfErrors == 0) {
-                        return errorMessage.toString();
-                    } else if (numberOfErrors > 2) {
+                        break;
+                    } else if (numberOfErrors > 1) {
                         errorMessage.append(", ");
                     } else if (numberOfErrors == 1) {
                         errorMessage.append(" and ");
                     }
                 }
             }
+            return errorMessage.toString();
         }
-        return "ERROR IN PARSING ERROR CODE";
     }
 
 
