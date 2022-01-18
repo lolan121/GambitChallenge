@@ -1,6 +1,6 @@
 # Gambit Challenge
 
-The solution is made in Java and simply parses the data from the text feed containing the register values. The results are printed into the console, showing each variable and its value. Admittedly, I have not worked much with problems such as this before, and thus the solution and code might not be optimal. Additionally, the presentation of the data could be done in a much better way using some form of UI, reading from the console is not very visually receptible but for this solution I chose to merely focus on the parsing of the data. A executable jar file is included in the repository and can be run using the command line: `java -exe Parser.jar`.
+The solution is made in Java and simply parses the data from the text feed containing the register values. The results are printed into the console, showing each variable and its value. Admittedly, I have not worked much with problems such as this before, and thus the solution and code might not be optimal. Additionally, the presentation of the data could be done in a much better way using some form of UI, reading from the console is not very visually receptible but for this solution I chose to merely focus on the parsing of the data. A executable jar file is included in the repository and can be run using the command line: `java -jar Parser.jar`.
 
 ***Contact: fredrik.holmnas@gmail.com***
 
